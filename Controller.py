@@ -35,7 +35,8 @@ class Controller:
         return NOOP
 
     def control(self):
-        #Do not Modify
+        #Do not modify the order of operations.
+        # Get current state, check exit condition and send next command.
         while(True):
             # 1. Get current state information from the server
             self.state.setState(self.networkMgr.getStateInfo())
