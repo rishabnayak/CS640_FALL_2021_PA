@@ -21,6 +21,13 @@ def getStates(currentState, opMap):
     return [head+opMap[op] for op in opMap.keys()]
 
 
+def collisionDetection(p1, body):
+    for line in body:
+        if distance(p1, [line.x1, line.y1]) + distance(p1, [line.x2, line.y2]) == distance([line.x2, line.y2], [line.x1, line.y1]):
+            return True
+    return False
+
+
 class Controller:
 
     def __init__(self, ip='localhost', port=4668):
@@ -36,39 +43,35 @@ class Controller:
         self.opMap = {LEFT: [-1, 0], RIGHT: [1, 0], UP: [0, -1], DOWN: [0, 1]}
         self.ops = list(self.opMap.keys())
 
-    def algo(self, head, food):
-        openList = deque()
-        closedList = []
-        for part in self.state.body[1:]:
-            closedList.append(tuple([part.x1, part.y1]))
-            closedList.append(tuple([part.x2, part.y2]))
-            if part.x1 == part.x2:
-                for i in range(part.y1, part.y2):
-                    closedList.append(tuple([part.x1, i]))
-            else:
-                for i in range(part.x1, part.x2):
-                    closedList.append(tuple([i, part.y1]))
-        gScore = {tuple(head): 0}
-        fScore = {tuple(head): distance(head, food)}
-        openList.append(head)
-        current = openList.popleft()
-        cost = []
-        for next in getStates(current, self.opMap):
-            if tuple(next) in closedList:
-                cost.append(math.inf)
-                continue
-            tentativeGScore = gScore[tuple(current)] + 1
-            if tuple(next) not in gScore or tentativeGScore < gScore[tuple(next)]:
-                gScore[tuple(next)] = tentativeGScore
-                fScore[tuple(next)] = tentativeGScore + \
-                    distance(next, food)
-                cost.append(tentativeGScore + distance(next, food))
-                openList.append(next)
-            else:
-                cost.append(math.inf)
-        print(cost)
-        self.networkMgr.sendCommand(self.ops[np.argmin(cost)])
-        closedList.append(tuple(current))
+    def greedyAgent(self, head, food):
+
+        # Don't move into any snakeLocation
+        # snakeLocation = []
+        # for part in self.state.body:
+        #     snakeLocation.append(tuple([part.x1, part.y1]))
+        #     snakeLocation.append(tuple([part.x2, part.y2]))
+        #     if part.x1 == part.x2:
+        #         for i in range(part.y1, part.y2):
+        #             snakeLocation.append(tuple([part.x1, i]))
+        #     else:
+        #         for i in range(part.x1, part.x2):
+        #             snakeLocation.append(tuple([i, part.y1]))
+
+        # Move to the closest food
+        position = [head.x1, head.y1]
+
+        minDistance = math.inf
+        currentBestAction = None
+
+        for i, action in enumerate(getStates(position, self.opMap)):
+            currentDistance = distance(action, food)
+            print(minDistance)
+            if not collisionDetection(action, self.state.body) and currentDistance < minDistance:
+                print(currentDistance)
+                minDistance = currentDistance
+                currentBestAction = i
+
+        return self.ops[currentBestAction]
 
     def control(self):
         # Do not modify the order of operations.
@@ -80,8 +83,8 @@ class Controller:
             if self.state.food == None:
                 break
             # 3. Send next command
-            self.algo(np.array([self.state.body[0].x1,
-                                self.state.body[0].y1]), self.state.food)
+            self.networkMgr.sendCommand(self.greedyAgent(
+                self.state.body[0], self.state.food))
 
 
 cntrl = Controller()
