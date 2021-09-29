@@ -45,19 +45,6 @@ class Controller:
         self.opMap = {LEFT: [-1, 0], RIGHT: [1, 0], UP: [0, -1], DOWN: [0, 1]}
         self.ops = list(self.opMap.keys())
 
-    def addSnakeLocation(self):
-        snakeLocation = []
-        for part in self.state.body:
-            snakeLocation.append(str([part.x1, part.y1]))
-            snakeLocation.append(str([part.x2, part.y2]))
-            if part.x1 == part.x2:
-                for i in range(part.y1, part.y2):
-                    snakeLocation.append(str([part.x1, i]))
-            else:
-                for i in range(part.x1, part.x2):
-                    snakeLocation.append(str([i, part.y1]))
-        return snakeLocation
-
     def aStar(self, head, food):
         position = [head.x1, head.y1]
         openList = []
