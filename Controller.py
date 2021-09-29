@@ -39,8 +39,13 @@ class Controller:
             ip, port)  # Initialize network manager and set environment dimensions
         self.state = State()  # Initialize empty state
         self.myInit()  # Initialize custom variables
-        self.dirArray = []
-
+        # self.border =[]
+        # for i in range(0, 400):
+        #     if i <301:
+        #         self.border.append(str([0, i]))
+        #         self.border.append(str([399, i]))
+        #     self.border.append(str([i, 0]))
+        #     self.border.append(str([i, 299]))
     # define your variables here
     def myInit(self):
         self.opMap = {LEFT: [-1, 0], RIGHT: [1, 0], UP: [0, -1], DOWN: [0, 1]}
@@ -62,7 +67,7 @@ class Controller:
     def aStar(self, head, food):
 
         # Don't move into any snakeLocation
-        snakeLocation = self.addSnakeLocation()
+        # snakeLocation = self.addSnakeLocation()
 
         # Move to the closest food
         position = [head.x1, head.y1]
@@ -73,10 +78,9 @@ class Controller:
         hScore = {}
         fScore = {}
         tiebreaker = count()
-        self.dirArray = []
+        dirArray = []
 
         heapq.heappush(openList, (0, -1, next(tiebreaker), position))
-
         # minDistance = math.inf
         # currentBestAction = None
 
@@ -92,14 +96,20 @@ class Controller:
 
         #finds the next best path to the food base on current location
         while(True):
+            if len(openList) == 0:
+                dirArray.append(emergency)
+                break
             temp = heapq.heappop(openList)
             del visted[str(temp[3])]
             closeList.append(str(temp[3]))
-            self.dirArray.append(temp[1])
+            dirArray.append(temp[1])
+            if len(dirArray)>1:
+                break
             if np.array_equal(temp[3], food):
                 break
+            emergency = -1
             for i, neighbor in enumerate(getStates(temp[3], self.opMap)):
-                if str(neighbor) not in closeList and str(neighbor) not in snakeLocation:
+                if str(neighbor) not in closeList and not collisionDetection(neighbor, self.state.body):
                     if str(neighbor) not in gScore:
                         tempg = 1
                     else:
@@ -113,7 +123,8 @@ class Controller:
                     fScore[str(neighbor)] = gScore[str(neighbor)] + hScore[str(neighbor)]
                     heapq.heappush(openList, (fScore[str(neighbor)], i, next(tiebreaker), neighbor))
                     visted[str(neighbor)] = True
-    
+                    emergency = i
+        return self.ops[dirArray.pop(1)]
     def control(self):
         # Do not modify the order of operations.
         # Get current state, check exit condition and send next command.
@@ -124,12 +135,16 @@ class Controller:
             if self.state.food == None:
                 break
             #run astar to find the path 
-            if len(self.dirArray) == 0 or np.array_equal([self.state.body[0].x1,self.state.body[0].y1] , [self.state.food[0],self.state.food[1]] ):
-                self.aStar(self.state.body[0], self.state.food)
+            # if len(self.dirArray) == 0 or np.array_equal([self.state.body[0].x1,self.state.body[0].y1] , [self.state.food[0],self.state.food[1]] ):
+            #     self.aStar(self.state.body[0], self.state.food)
             # 3. Send next command
-            # self.networkMgr.sendCommand(self.aStar(
-            #     self.state.body[0], self.state.food))
-            self.networkMgr.sendCommand(self.ops[self.dirArray.pop(0)])
+            t1_start = time.perf_counter()
+            self.networkMgr.sendCommand(self.aStar(
+                self.state.body[0], self.state.food))
+            t1_stop = time.perf_counter()
+            # print("Elapsed time during the whole program in seconds:",
+            #                             t1_stop-t1_start)
+            # self.networkMgr.sendCommand(self.ops[self.dirArray.pop(0)])
 
 
 cntrl = Controller()
