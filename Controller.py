@@ -97,16 +97,13 @@ class Controller:
         #finds the next best path to the food base on current location
         while(True):
             temp = heapq.heappop(openList)
-            #del visted[str(temp[3])]
+            del visted[str(temp[3])]
             closeList.append(str(temp[3]))
             dirArray.append(temp[1])
             if len(dirArray)>1:
                 break
-            if np.array_equal(temp[3], food):
-                break
             for i, neighbor in enumerate(getStates(temp[3], self.opMap)):
                 if str(neighbor) not in closeList and not collisionDetection(neighbor, self.state.body):
-                    print(neighbor)
                     if str(neighbor) not in gScore:
                         tempg = 1
                     else:
@@ -114,12 +111,16 @@ class Controller:
                     if str(neighbor) in visted:
                         if tempg < gScore[str(neighbor)]:
                             gScore[str(neighbor)] = tempg
+                        hScore[str(neighbor)] = distance(neighbor,food)
+                        fScore[str(neighbor)] = gScore[str(neighbor)] + hScore[str(neighbor)]
                     else:
                         gScore[str(neighbor)] = tempg
-                    hScore[str(neighbor)] = distance(neighbor,food)
-                    fScore[str(neighbor)] = gScore[str(neighbor)] + hScore[str(neighbor)]
-                    heapq.heappush(openList, (fScore[str(neighbor)], i, next(tiebreaker), neighbor))
-                    visted[str(neighbor)] = True
+                        hScore[str(neighbor)] = distance(neighbor,food)
+                        fScore[str(neighbor)] = gScore[str(neighbor)] + hScore[str(neighbor)]
+                        heapq.heappush(openList, (fScore[str(neighbor)], i, next(tiebreaker), neighbor))
+                        visted[str(neighbor)] = True
+            if np.array_equal(temp[3], food):
+                break
         return self.ops[dirArray.pop(1)]
     def control(self):
         # Do not modify the order of operations.
