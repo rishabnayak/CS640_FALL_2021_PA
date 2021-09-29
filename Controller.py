@@ -39,14 +39,8 @@ class Controller:
             ip, port)  # Initialize network manager and set environment dimensions
         self.state = State()  # Initialize empty state
         self.myInit()  # Initialize custom variables
-        # self.border =[]
-        # for i in range(0, 400):
-        #     if i <301:
-        #         self.border.append(str([0, i]))
-        #         self.border.append(str([399, i]))
-        #     self.border.append(str([i, 0]))
-        #     self.border.append(str([i, 299]))
     # define your variables here
+
     def myInit(self):
         self.opMap = {LEFT: [-1, 0], RIGHT: [1, 0], UP: [0, -1], DOWN: [0, 1]}
         self.ops = list(self.opMap.keys())
@@ -65,15 +59,10 @@ class Controller:
         return snakeLocation
 
     def aStar(self, head, food):
-
-        # Don't move into any snakeLocation
-        # snakeLocation = self.addSnakeLocation()
-
-        # Move to the closest food
         position = [head.x1, head.y1]
         openList = []
-        visted = {str(position):True}
-        closeList = []
+        visited = {str(position): True}
+        closedList = []
         gScore = {}
         hScore = {}
         fScore = {}
@@ -81,47 +70,38 @@ class Controller:
         dirArray = []
 
         heapq.heappush(openList, (0, -1, next(tiebreaker), position))
-        # minDistance = math.inf
-        # currentBestAction = None
 
-        # for i, action in enumerate(getStates(position, self.opMap)):
-        #     currentDistance = distance(action, food)
-        #     print(minDistance)
-        #     if not collisionDetection(action, self.state.body) and currentDistance < minDistance:
-        #         print(currentDistance)
-        #         minDistance = currentDistance
-        #         currentBestAction = i
-
-        # return self.ops[currentBestAction]
-
-        #finds the next best path to the food base on current location
         while(True):
             temp = heapq.heappop(openList)
-            del visted[str(temp[3])]
-            closeList.append(str(temp[3]))
+            del visited[str(temp[3])]
+            closedList.append(str(temp[3]))
             dirArray.append(temp[1])
-            if len(dirArray)>1:
+            if len(dirArray) > 1:
                 break
             for i, neighbor in enumerate(getStates(temp[3], self.opMap)):
-                if str(neighbor) not in closeList and not collisionDetection(neighbor, self.state.body):
+                if str(neighbor) not in closedList and not collisionDetection(neighbor, self.state.body):
                     if str(neighbor) not in gScore:
                         tempg = 1
                     else:
                         tempg = gScore[str(neighbor)] + 1
-                    if str(neighbor) in visted:
+                    if str(neighbor) in visited:
                         if tempg < gScore[str(neighbor)]:
                             gScore[str(neighbor)] = tempg
-                        hScore[str(neighbor)] = distance(neighbor,food)
-                        fScore[str(neighbor)] = gScore[str(neighbor)] + hScore[str(neighbor)]
+                        hScore[str(neighbor)] = distance(neighbor, food)
+                        fScore[str(neighbor)] = gScore[str(
+                            neighbor)] + hScore[str(neighbor)]
                     else:
                         gScore[str(neighbor)] = tempg
-                        hScore[str(neighbor)] = distance(neighbor,food)
-                        fScore[str(neighbor)] = gScore[str(neighbor)] + hScore[str(neighbor)]
-                        heapq.heappush(openList, (fScore[str(neighbor)], i, next(tiebreaker), neighbor))
-                        visted[str(neighbor)] = True
+                        hScore[str(neighbor)] = distance(neighbor, food)
+                        fScore[str(neighbor)] = gScore[str(
+                            neighbor)] + hScore[str(neighbor)]
+                        heapq.heappush(
+                            openList, (fScore[str(neighbor)], i, next(tiebreaker), neighbor))
+                        visited[str(neighbor)] = True
             if np.array_equal(temp[3], food):
                 break
         return self.ops[dirArray.pop(1)]
+
     def control(self):
         # Do not modify the order of operations.
         # Get current state, check exit condition and send next command.
@@ -131,17 +111,14 @@ class Controller:
             # 2. Check Exit condition
             if self.state.food == None:
                 break
-            #run astar to find the path 
-            # if len(self.dirArray) == 0 or np.array_equal([self.state.body[0].x1,self.state.body[0].y1] , [self.state.food[0],self.state.food[1]] ):
-            #     self.aStar(self.state.body[0], self.state.food)
+
             # 3. Send next command
             t1_start = time.perf_counter()
             self.networkMgr.sendCommand(self.aStar(
                 self.state.body[0], self.state.food))
             t1_stop = time.perf_counter()
-            # print("Elapsed time during the whole program in seconds:",
-            #                             t1_stop-t1_start)
-            # self.networkMgr.sendCommand(self.ops[self.dirArray.pop(0)])
+            print("Time per command:",
+                  t1_stop-t1_start)
 
 
 cntrl = Controller()
